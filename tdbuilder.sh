@@ -16,33 +16,40 @@ BOOST=false
 
 DCMAKE_BUILD_TYPE=Release
 
-while true; do
-    case "$1" in 
-        --TARGET | --TARGET= | --TARGET=$2)
+
+case "$1" in 
+    "--TARGET" | "--TARGET=linux" | "--TARGET=macos")
+        if [[ $1 == *"="* ]]; then
+            cmd=$(echo $1 | cut -d'=' -f1)
+            os=$(echo $1 | cut -d'=' -f2)
+
+            TARGET=$os
+            shift
+        elif [[ $2 ]]; then
             TARGET="$2"
             shift 2
-            ;;
-        *)
-            if [[ ${#@} -eq 0 ]]; then
-                break
-            fi
-
-            for opt in --CLANG --DEBUG --BOOST --help; do
-                for arg in $@; do
-                    if [[ "$opt" == "$arg" ]]; then 
-                        ((n++))
-                    fi
-                done
-            done
-
-            if [[ $n -eq 0 || ${#@} -ge 5 ]]; then
-                    echo "Unrecognized option, see usage."
-                    exit 1
-            fi
+        fi
+        ;;
+    *)
+        if [[ ${#@} -eq 0 ]]; then
             break
-            ;;
-    esac
-done
+        fi
+
+        for opt in --CLANG --DEBUG --BOOST --help; do
+            for arg in $@; do
+                if [[ "$opt" == "$arg" ]]; then 
+                    ((n++))
+                fi
+            done
+        done
+
+        if [[ $n -eq 0 || ${#@} -ge 5 ]]; then
+                echo "Unrecognized option, see usage."
+                exit 1
+        fi
+        break
+        ;;
+esac
 
 for arg in "$@"; do 
     if [[ "$arg" == "--CLANG" ]]; then 
@@ -56,7 +63,7 @@ for arg in "$@"; do
     fi; 
 done
 
-if [ $TARGET = "linux" ]; then
+if [[ $TARGET == "linux" ]]; then
     apt-get update && apt-get upgrade -y
     apt-get install -y make git zlib1g-dev libssl-dev gperf php-cli cmake g++
     git clone https://github.com/tdlib/td.git
@@ -85,7 +92,8 @@ if [ $TARGET = "linux" ]; then
     cd ..
     ls -l td/tdlib
     exit 0
-elif [ $TARGET = "macos" ]; then
+
+elif [[ $TARGET == "macos" ]]; then
     xcode-select --install
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     brew install gperf cmake openssl
