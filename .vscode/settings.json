@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.sh": "sh"
+    },
+    "git.ignoreLimitWarning": true
+}
