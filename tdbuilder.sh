@@ -22,12 +22,20 @@ while true; do
             shift 2
             ;;
         *)
-            for arg in "$@"; do
-                if [[ $arg != "--CLANG" || $arg != "--DEBUG" || $arg != "--BOOST" ]]; then
+            n=0
+            for opt in --CLANG --DEBUG --BOOST --help; do
+                for arg in $@; do
+                    if [[ "$opt" == "$arg" ]]; then 
+                        ((n++))
+                    fi
+                done
+            done
+
+            if [[ $n -eq 0 || ${#@} -ge 5 ]]; then
                     echo "Unrecognized option, see usage."
                     exit 1
-                fi
-            done
+            fi
+            break
             ;;
     esac
 done
@@ -43,35 +51,25 @@ for arg in "$@"; do
         usage
     fi; 
 done
-exit 0
 
 if [ $TARGET = "linux" ]; then
-    if [ $BOOST ]; then
-        apt-get update && apt-get upgrade -y
-        apt-get install -y make git zlib1g-dev libssl-dev gperf php-cli cmake g++
-        git clone https://github.com/tdlib/td.git
-        cd td
-        rm -rf build
-        mkdir build
-        cd build
-        if [ $CLANG ]; then
-            CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
-        fi
+    apt-get update && apt-get upgrade -y
+    apt-get install -y make git zlib1g-dev libssl-dev gperf php-cli cmake g++
+    git clone https://github.com/tdlib/td.git
+    cd td
+    rm -rf build
+    mkdir build
+    cd build
+    if [ $CLANG ]; then
+        CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
+    elif [ ! $CLANG ]; then
         cmake -DCMAKE_BUILD_TYPE=DCMAKE_BUILD_TYPE -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
+    fi
+
+    if [ $BOOST ]; then
         cmake --build . --target install
         cd ..
-        cd ..
-        ls -l td/tdlib
-        exit 0    
-    else
-        apt-get update && apt-get upgrade
-        apt-get install make git zlib1g-dev libssl-dev gperf php-cli cmake g++
-        git clone https://github.com/tdlib/td.git
-        cd td
-        rm -rf build
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
+    elif [ ! $BOOST ]; then
         cmake --build . --target prepare_cross_compiling
         cd ..
         php SplitSource.php
@@ -79,7 +77,5 @@ if [ $TARGET = "linux" ]; then
         cmake --build . --target install
         cd ..
         php SplitSource.php --undo
-        cd ..
-        ls -l td/tdlib
-        exit 0
+    fi
 fi
