@@ -9,6 +9,7 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+n=0
 TARGET=linux
 CLANG=false
 BOOST=false
@@ -22,7 +23,10 @@ while true; do
             shift 2
             ;;
         *)
-            n=0
+            if [[ ${#@} -eq 0 ]]; then
+                break
+            fi
+
             for opt in --CLANG --DEBUG --BOOST --help; do
                 for arg in $@; do
                     if [[ "$opt" == "$arg" ]]; then 
@@ -47,7 +51,7 @@ for arg in "$@"; do
         DCMAKE_BUILD_TYPE=Debug
     elif [[ "$arg" == "--BOOST" ]]; then 
         BOOST=true
-    elif [[ "$arg" == "-h" || "$arg" == "--help" ]]; then 
+    elif [[ "$arg" == "--help" ]]; then 
         usage
     fi; 
 done
